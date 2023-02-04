@@ -14,13 +14,12 @@ bot = commands.Bot(
     intents=intents
 )
 
-
 @bot.event
 async def on_ready():
     activity = discord.Game(name='!play something')
     await bot.change_presence(activity=activity)
     print(f'Logged in as {bot.user.name}')
-    # bot.add_cog(MusicCog(bot))
+    await bot.add_cog(MusicCog(bot))
 
 
 def main():
