@@ -6,7 +6,7 @@ from discord.ext import commands
 import ytdl
 import voice
 
-class Music(commands.Cog):
+class MusicCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.voice_states = {}

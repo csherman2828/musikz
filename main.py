@@ -4,16 +4,16 @@ import json
 import discord
 from discord.ext import commands
 
-import music
+from music import MusicCog
 
-bot = commands.Bot(command_prefix='|', description="Daj eno zgodlej")
+bot = commands.Bot(command_prefix='!', description="A music bot")
 
 @bot.event
 async def on_ready():
-    activity = discord.Game(name='|play sampanjac')
+    activity = discord.Game(name='!play something')
     await bot.change_presence(activity=activity)
     print(f'Logged in as {bot.user.name}')
-    bot.add_cog(music.Music(bot))
+    bot.add_cog(MusicCog(bot))
 
 def main():
     with open('config.json') as fh:
