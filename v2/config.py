@@ -1,19 +1,23 @@
 import json
 
+
 class NoTokenInConfigException(Exception):
     pass
 
+
 def _get_token(config_dict):
     if 'token' in config_dict:
-      return config_dict['token']
+        return config_dict['token']
     else:
-      raise NoTokenInConfigException()
+        raise NoTokenInConfigException()
+
 
 def _get_prefix(config_dict):
     if 'prefix' in config_dict.keys():
         return config_dict['prefix']
     else:
         return '!'
+
 
 # set defaults
 prefix = ''

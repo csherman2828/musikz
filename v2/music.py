@@ -6,6 +6,7 @@ from discord.ext import commands
 import ytdl
 import voice
 
+
 class MusicCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -28,12 +29,13 @@ class MusicCog(commands.Cog):
     def cog_check(self, ctx: commands.Context):
         """Prevent calling commands in DM's"""
         if not ctx.guild:
-            raise commands.NoPrivateMessage('This command can\'t be used in DM channels.')
+            raise commands.NoPrivateMessage(
+                'This command can\'t be used in DM channels.')
 
         return True
 
     async def cog_before_invoke(self, ctx: commands.Context):
-        #Set voice state for every command
+        # Set voice state for every command
         ctx.voice_state = self.get_voice_state(ctx)
 
     async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
@@ -42,7 +44,8 @@ class MusicCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.id != self.bot.user.id:
-            print(f"{message.guild}/{message.channel}/{message.author.name}>{message.content}")
+            print(
+                f"{message.guild}/{message.channel}/{message.author.name}>{message.content}")
             if message.embeds:
                 print(message.embeds[0].to_dict())
 
@@ -65,7 +68,8 @@ class MusicCog(commands.Cog):
         """
 
         if not channel and not ctx.author.voice:
-            raise voice.VoiceError('You are neither connected to a voice channel nor specified a channel to join.')
+            raise voice.VoiceError(
+                'You are neither connected to a voice channel nor specified a channel to join.')
 
         destination = channel or ctx.author.voice.channel
         if ctx.voice_state.voice:
@@ -133,11 +137,10 @@ class MusicCog(commands.Cog):
         if ctx.voice_state.autoplay:
             ctx.voice_state.autoplay = False
             await ctx.send('Autoplay is now turned off')
-            
+
         if ctx.voice_state.is_playing:
             ctx.voice_state.voice.stop()
             await ctx.message.add_reaction('⏹')
-
 
     @commands.command(name='skip', aliases=['s'])
     async def _skip(self, ctx: commands.Context):
@@ -183,7 +186,8 @@ class MusicCog(commands.Cog):
 
         queue = ''
         for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
-            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
+            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(
+                i + 1, song)
 
         embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.songs), queue))
                  .set_footer(text='Viewing page {}/{}'.format(page, pages)))
@@ -206,7 +210,8 @@ class MusicCog(commands.Cog):
 
         queue = ''
         for i, song in enumerate(ctx.voice_state.song_history[start:end], start=start):
-            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
+            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(
+                i + 1, song)
 
         embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.song_history), queue))
                  .set_footer(text='Viewing page {}/{}'.format(page, pages)))
@@ -244,7 +249,7 @@ class MusicCog(commands.Cog):
         # Inverse boolean value to loop and unloop.
         ctx.voice_state.loop = not ctx.voice_state.loop
         await ctx.message.add_reaction('✅')
-        await ctx.send('Looping a song is now turned ' + ('on' if ctx.voice_state.loop else 'off') )
+        await ctx.send('Looping a song is now turned ' + ('on' if ctx.voice_state.loop else 'off'))
 
     @commands.command(name='autoplay')
     async def _autoplay(self, ctx: commands.Context):
@@ -258,7 +263,7 @@ class MusicCog(commands.Cog):
         # Inverse boolean value to loop and unloop.
         ctx.voice_state.autoplay = not ctx.voice_state.autoplay
         await ctx.message.add_reaction('✅')
-        await ctx.send('Autoplay after end of queue is now ' + ('on' if ctx.voice_state.autoplay else 'off') )
+        await ctx.send('Autoplay after end of queue is now ' + ('on' if ctx.voice_state.autoplay else 'off'))
 
     @commands.command(name='play', aliases=['p'])
     async def _play(self, ctx: commands.Context, *, search: str):
@@ -309,13 +314,15 @@ class MusicCog(commands.Cog):
                     song = voice.Song(source)
                     await ctx.voice_state.songs.put(song)
                     await ctx.send('Enqueued {}'.format(str(source)))
-            
+
     @_join.before_invoke
     @_play.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
         if not ctx.author.voice or not ctx.author.voice.channel:
-            raise commands.CommandError('You are not connected to any voice channel.')
+            raise commands.CommandError(
+                'You are not connected to any voice channel.')
 
         if ctx.voice_client:
             if ctx.voice_client.channel != ctx.author.voice.channel:
-                raise commands.CommandError('Bot is already in a voice channel.')
+                raise commands.CommandError(
+                    'Bot is already in a voice channel.')
