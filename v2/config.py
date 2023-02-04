@@ -18,15 +18,23 @@ def _get_prefix(config_dict):
     else:
         return '!'
 
+def _get_guilds(config_dict):
+    if 'guilds' in config_dict.keys() and type(config_dict['guilds']) == dict:
+        return [value for value in config_dict['guilds'].values()]
+    else: 
+        return []
 
-# set defaults
+# initialize globally to be accessed from imports
 prefix = ''
 token = ''
+guilds = []
 
 with open('config.json') as config_file:
     config_dict = json.load(config_file)
     token = _get_token(config_dict)
     prefix = _get_prefix(config_dict)
+    guilds = _get_guilds(config_dict)
+    print('guilds', guilds)
 
 print('config token:', token)
 print('config prefix:', prefix)
