@@ -99,7 +99,6 @@ class MusicCog(commands.Cog):
         print(">>>Pause Command:")
         if ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
             ctx.voice_state.voice.pause()
-            await ctx.message.add_reaction('⏯')
 
     @commands.command(name='resume', aliases=['re', 'res'])
     async def _resume(self, ctx: commands.Context):
@@ -107,7 +106,6 @@ class MusicCog(commands.Cog):
 
         if ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
             ctx.voice_state.voice.resume()
-            await ctx.message.add_reaction('⏯')
 
     @commands.command(name='stop')
     async def _stop(self, ctx: commands.Context):
@@ -121,7 +119,6 @@ class MusicCog(commands.Cog):
 
         if ctx.voice_state.is_playing:
             ctx.voice_state.voice.stop()
-            await ctx.message.add_reaction('⏹')
 
     @commands.command(name='skip', aliases=['s'])
     async def _skip(self, ctx: commands.Context):
@@ -189,7 +186,6 @@ class MusicCog(commands.Cog):
             return await ctx.send('Empty queue.')
 
         ctx.voice_state.songs.shuffle()
-        await ctx.message.add_reaction('✅')
 
     @commands.command(name='remove')
     async def _remove(self, ctx: commands.Context, index: int):
@@ -199,7 +195,6 @@ class MusicCog(commands.Cog):
             return await ctx.send('Empty queue.')
 
         ctx.voice_state.songs.remove(index - 1)
-        await ctx.message.add_reaction('✅')
 
     @commands.command(name='loop')
     async def _loop(self, ctx: commands.Context):
@@ -212,7 +207,6 @@ class MusicCog(commands.Cog):
 
         # Inverse boolean value to loop and unloop.
         ctx.voice_state.loop = not ctx.voice_state.loop
-        await ctx.message.add_reaction('✅')
         await ctx.send('Looping a song is now turned ' + ('on' if ctx.voice_state.loop else 'off'))
 
     @commands.command(name='autoplay')
@@ -226,7 +220,6 @@ class MusicCog(commands.Cog):
 
         # Inverse boolean value to loop and unloop.
         ctx.voice_state.autoplay = not ctx.voice_state.autoplay
-        await ctx.message.add_reaction('✅')
         await ctx.send('Autoplay after end of queue is now ' + ('on' if ctx.voice_state.autoplay else 'off'))
 
     @commands.command(name='play', aliases=['p'])
