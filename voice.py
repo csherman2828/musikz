@@ -10,8 +10,10 @@ from bs4 import BeautifulSoup
 
 import ytdl
 
+
 class VoiceError(Exception):
     pass
+
 
 class Song:
     __slots__ = ('source', 'requester')
@@ -19,19 +21,19 @@ class Song:
     def __init__(self, source: ytdl.YTDLSource):
         self.source = source
         self.requester = source.requester
-    
+
     def create_embed(self):
         embed = (discord.Embed(title='Now playing', description='```css\n{0.source.title}\n```'.format(self), color=discord.Color.blurple())
-                .add_field(name='Duration', value=self.source.duration)
-                .add_field(name='Requested by', value=self.requester.mention)
-                .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
-                .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
-                .set_thumbnail(url=self.source.thumbnail)
-                .set_author(name=self.requester.name, icon_url=self.requester.avatar_url))
+                 .add_field(name='Duration', value=self.source.duration)
+                 .add_field(name='Requested by', value=self.requester.mention)
+                 .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
+                 .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
+                 .set_thumbnail(url=self.source.thumbnail)
+                 .set_author(name=self.requester.name, icon_url=self.requester.avatar_url))
         return embed
 
 
-class SongQueue(asyncio.Queue):    
+class SongQueue(asyncio.Queue):
     def __getitem__(self, item):
         if isinstance(item, slice):
             return list(itertools.islice(self._queue, item.start, item.stop, item.step))
@@ -119,11 +121,12 @@ class VoiceState:
                 # reasons.
                 if self.autoplay and self.current:
                     try:
-                        async with timeout(3): 
+                        async with timeout(3):
                             self.current = await self.songs.get()
                     except asyncio.TimeoutError:
                         # Spoof user agent to show whole page.
-                        headers = {'User-Agent' : 'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'}
+                        headers = {
+                            'User-Agent': 'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'}
                         song_url = self.current.source.url
                         # Get the page
                         async with httpx.AsyncClient() as client:
@@ -138,7 +141,8 @@ class VoiceState:
 
                             # Only videos (no mixes or playlists)
                             if 'content-link' in a.attrs['class']:
-                                recommended_urls.append(f'https://www.youtube.com{a.get("href")}')
+                                recommended_urls.append(
+                                    f'https://www.youtube.com{a.get("href")}')
 
                         ctx = self._ctx
 
@@ -152,7 +156,7 @@ class VoiceState:
                                 if recommended_url == song.source.url:
                                     not_in_history = False
                                     break
-                            
+
                             if not_in_history:
                                 next_song = recommended_url
                                 break
@@ -169,7 +173,7 @@ class VoiceState:
                                 song = Song(source)
                                 self.current = song
                                 await ctx.send('Autoplaying {}'.format(str(source)))
-                        
+
                 else:
                     try:
                         async with timeout(180):  # 3 minutes
@@ -178,24 +182,25 @@ class VoiceState:
                         self.bot.loop.create_task(self.stop())
                         self.exists = False
                         return
-                
+
                 self.song_history.insert(0, self.current)
                 self.current.source.volume = self._volume
                 self.voice.play(self.current.source, after=self.play_next_song)
                 await self.current.source.channel.send(embed=self.current.create_embed())
-            
-            #If the song is looped
+
+            # If the song is looped
             elif self.loop == True:
                 self.song_history.insert(0, self.current)
-                self.now = discord.FFmpegPCMAudio(self.current.source.stream_url, **ytdl.YTDLSource.FFMPEG_OPTIONS)
+                self.now = discord.FFmpegPCMAudio(
+                    self.current.source.stream_url, **ytdl.YTDLSource.FFMPEG_OPTIONS)
                 self.voice.play(self.now, after=self.play_next_song)
-            
+
             await self.next.wait()
 
     def play_next_song(self, error=None):
         if error:
             raise VoiceError(str(error))
-        
+
         self.next.set()
 
     def skip(self):

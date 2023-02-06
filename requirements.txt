@@ -1,4 +1,4 @@
-bs4==0.0.1
-discord.py[voice]==1.6.0
-httpx==0.22.0
-youtube-dl==2021.2.10
+bs4
+discord.py[voice]
+httpx
+youtube_dl

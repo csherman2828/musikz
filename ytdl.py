@@ -7,8 +7,10 @@ from discord.ext import commands
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
+
 class YTDLError(Exception):
     pass
+
 
 class YTDLSource(discord.PCMVolumeTransformer):
     YTDL_OPTIONS = {
@@ -63,11 +65,13 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
 
-        partial = functools.partial(cls.ytdl.extract_info, search, download=False, process=False)
+        partial = functools.partial(
+            cls.ytdl.extract_info, search, download=False, process=False)
         data = await loop.run_in_executor(None, partial)
 
         if data is None:
-            raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
+            raise YTDLError(
+                'Couldn\'t find anything that matches `{}`'.format(search))
 
         if 'entries' not in data:
             process_info = data
@@ -79,10 +83,12 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     break
 
             if process_info is None:
-                raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
+                raise YTDLError(
+                    'Couldn\'t find anything that matches `{}`'.format(search))
 
         webpage_url = process_info['webpage_url']
-        partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
+        partial = functools.partial(
+            cls.ytdl.extract_info, webpage_url, download=False)
         processed_info = await loop.run_in_executor(None, partial)
 
         if processed_info is None:
@@ -96,8 +102,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 try:
                     info = processed_info['entries'].pop(0)
                 except IndexError:
-                    raise YTDLError('Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
-        
+                    raise YTDLError(
+                        'Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
+
         return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
 
     @classmethod
@@ -107,22 +114,25 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
 
-        partial = functools.partial(cls.ytdl.extract_info, cls.search_query, download=False, process=False)
+        partial = functools.partial(
+            cls.ytdl.extract_info, cls.search_query, download=False, process=False)
         info = await loop.run_in_executor(None, partial)
 
         cls.search = {}
         cls.search["title"] = f'Search results for:\n**{search}**'
         cls.search["type"] = 'rich'
         cls.search["color"] = 7506394
-        cls.search["author"] = {'name': f'{ctx.author.name}', 'url': f'{ctx.author.avatar_url}', 'icon_url': f'{ctx.author.avatar_url}'}
-        
+        cls.search["author"] = {'name': f'{ctx.author.name}',
+                                'url': f'{ctx.author.avatar_url}', 'icon_url': f'{ctx.author.avatar_url}'}
+
         lst = []
 
         for e in info['entries']:
-            #lst.append(f'`{info["entries"].index(e) + 1}.` {e.get("title")} **[{YTDLSource.parse_duration(int(e.get("duration")))}]**\n')
+            # lst.append(f'`{info["entries"].index(e) + 1}.` {e.get("title")} **[{YTDLSource.parse_duration(int(e.get("duration")))}]**\n')
             VId = e.get('id')
             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-            lst.append(f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
+            lst.append(
+                f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
         lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
         cls.search["description"] = "\n".join(lst)
@@ -132,7 +142,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         def check(msg):
             return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
-        
+
         try:
             m = await bot.wait_for('message', check=check, timeout=45.0)
 
@@ -148,16 +158,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
                             """data = value[sel - 1]"""
                             VId = value[sel - 1]['id']
                             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
-                            partial = functools.partial(cls.ytdl.extract_info, VUrl, download=False)
+                            partial = functools.partial(
+                                cls.ytdl.extract_info, VUrl, download=False)
                             data = await loop.run_in_executor(None, partial)
-                    rtrn = cls(ctx, discord.FFmpegPCMAudio(data['url'], **cls.FFMPEG_OPTIONS), data=data)
+                    rtrn = cls(ctx, discord.FFmpegPCMAudio(
+                        data['url'], **cls.FFMPEG_OPTIONS), data=data)
                 else:
                     rtrn = 'sel_invalid'
             elif m.content == 'cancel':
                 rtrn = 'cancel'
             else:
                 rtrn = 'sel_invalid'
-        
+
         return rtrn
 
     @staticmethod
@@ -176,10 +188,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 duration.append('{}'.format(minutes))
             if seconds > 0:
                 duration.append('{}'.format(seconds))
-            
+
             value = ':'.join(duration)
-        
+
         elif duration == 0:
             value = "LIVE"
-        
+
         return value

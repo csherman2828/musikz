@@ -1,4 +1,0 @@
-bs4
-discord.py[voice]
-httpx
-youtube-dl
