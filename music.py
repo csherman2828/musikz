@@ -87,20 +87,6 @@ class MusicCog(commands.Cog):
         await ctx.voice_state.stop()
         del self.voice_states[ctx.guild.id]
 
-    @commands.command(name='volume')
-    @commands.is_owner()
-    async def _volume(self, ctx: commands.Context, *, volume: int):
-        """Sets the volume of the player."""
-
-        if not ctx.voice_state.is_playing:
-            return await ctx.send('Nothing being played at the moment.')
-
-        if 0 > volume > 100:
-            return await ctx.send('Volume must be between 0 and 100')
-
-        ctx.voice_state.volume = volume / 100
-        await ctx.send('Volume of the player set to {}%'.format(volume))
-
     @commands.command(name='now', aliases=['current', 'playing', 'np', 'nowplaying'])
     async def _now(self, ctx: commands.Context):
         """Displays the currently playing song."""
