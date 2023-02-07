@@ -119,97 +119,24 @@ class VoiceState:
             print('voice.VoiceState.audio_player_task', 'at loop beginning')
             self.next.clear()
             self.now = None
-
-            if self.loop == False:
+            
+            if self.loop == True:
+                print('voice.VoiceState.audio_player_task', 'song is looped, playing again')
+                self.song_history.insert(0, self.current)
+                self.now = discord.FFmpegPCMAudio(
+                    self.current.source.stream_url, **ytdl.YTDLSource.FFMPEG_OPTIONS)
+                self.voice.play(self.now, after=self.play_next_song)
+            else:
                 print('voice.VoiceState.audio_player_task', 'song is not looped')
-                # If autoplay is turned on wait 3 seconds for a new song.
-                # If no song is found find a new one,
-                # else if autoplay is turned off try to get the
-                # next song within 3 minutes.
-                # If no song will be added to the queue in time,
-                # the player will disconnect due to performance
-                # reasons.
-                # FIXME autoplay is broken right now
-                if self.autoplay and self.current and False:
-                    try:
-                        print('voice.VoiceState.audio_player_task', 'autoplaying - wait 3 seconds for a song')
-                        async with timeout(3):
-                            self.current = await self.songs.get()
-                    except asyncio.TimeoutError:
-                        
-                        print('voice.VoiceState.audio_player_task', 'no song received, finding recommendation to autoplay')
-                        # Spoof user agent to show whole page.
-                        headers = {
-                            'User-Agent': 'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)'}
-                        song_url = self.current.source.url
-                        # Get the page
-                        print('voice.VoiceState.audio_player_task', 'getting webpage for song url', song_url)
-                        async with httpx.AsyncClient() as client:
-                            response = await client.get(song_url, headers=headers)
-  
-                        print('voice.VoiceState.audio_player_task', 'doing beautiful soup things')
-                        # FIXME gets stuck after this line, never prints
-                        #     'got soup'
-                        soup = BeautifulSoup(response.text, features='lxml')
-                        print('got soup')
-
-                        # Parse all the recommended videos out of the response and store them in a list
-                        recommended_urls = []
-                        for li in soup.find_all('li', class_='related-list-item'):
-                            a = li.find('a')
-
-                            # Only videos (no mixes or playlists)
-                            if 'content-link' in a.attrs['class']:
-                                print('appending url', f'https://www.youtube.com{a.get("href")}')
-                                recommended_urls.append(
-                                    f'https://www.youtube.com{a.get("href")}')
-
-                        ctx = self._ctx
-
-                        # Chose the next song so that it wasnt played recently
-
-                        print('choosing next song')
-
-                        next_song = recommended_urls[0]
-
-                        for recommended_url in recommended_urls:
-                            not_in_history = True
-                            for song in self.song_history[:15]:
-                                if recommended_url == song.source.url:
-                                    not_in_history = False
-                                    break
-
-                            if not_in_history:
-                                next_song = recommended_url
-                                break
-
-                        
-                        print('voice.VoiceState.audio_player_task', 'found next song', next_song)
-                        async with ctx.typing():
-                            try:
-                                source = await ytdl.YTDLSource.create_source(ctx, next_song, loop=self.bot.loop)
-                            except ytdl.YTDLError as e:
-                                await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
-                                self.bot.loop.create_task(self.stop())
-                                self.exists = False
-                                return
-                            else:
-                                song = Song(source)
-                                self.current = song
-                                await ctx.send('Autoplaying {}'.format(str(source)))
-
-                else:
-                    print('voice.VoiceState.audio_player_task', 'no autoplay')
-                    try:
-                        print('voice.VoiceState.audio_player_task', 'waiting 3 minutes before disconnecting')
-                        async with timeout(180):  # 3 minutes
-                            self.current = await self.songs.get()
-                    except asyncio.TimeoutError:
-                        
-                        print('voice.VoiceState.audio_player_task', '3 minutes passed - disconnecting')
-                        self.bot.loop.create_task(self.stop())
-                        self.exists = False
-                        return
+                try:
+                    print('voice.VoiceState.audio_player_task', 'waiting 3 minutes before disconnecting')
+                    async with timeout(180):  # 3 minutes
+                        self.current = await self.songs.get()
+                except asyncio.TimeoutError:
+                    print('voice.VoiceState.audio_player_task', '3 minutes passed - disconnecting')
+                    self.bot.loop.create_task(self.stop())
+                    self.exists = False
+                    return
 
                 
                 print('voice.VoiceState.audio_player_task', 'playing next song')
@@ -218,15 +145,6 @@ class VoiceState:
                 self.voice.play(self.current.source, after=self.play_next_song)
                 await self.current.source.channel.send(embed=self.current.create_embed())
 
-            # If the song is looped
-            elif self.loop == True:
-                print('voice.VoiceState.audio_player_task', 'song is looped, playing again')
-                self.song_history.insert(0, self.current)
-                self.now = discord.FFmpegPCMAudio(
-                    self.current.source.stream_url, **ytdl.YTDLSource.FFMPEG_OPTIONS)
-                self.voice.play(self.now, after=self.play_next_song)
-
-        
             print('voice.VoiceState.audio_player_task', 'waiting for end of current song')
             await self.next.wait()
 
