@@ -64,17 +64,23 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
         loop = loop or asyncio.get_event_loop()
 
-        partial = functools.partial(
-            cls.ytdl.extract_info, search, download=False, process=False)
-        data = await loop.run_in_executor(None, partial)
+        data = await loop.run_in_executor(
+            None, 
+            lambda: ytdl.extract_info(search, download=False, process=False)
+        )
 
+        # print('ytdl.YTDLSource.create_source', 'got data', str(data))
         if data is None:
             raise YTDLError(
                 'Couldn\'t find anything that matches `{}`'.format(search))
 
         if 'entries' not in data:
+            # print('ytdl.YTDLSource.create_source', 'entries not in data')
             process_info = data
         else:
+            # print('ytdl.YTDLSource.create_source', 'entries in data, searching for truthy entry')
+            # print('ytdl.YTDLSource.create_source', 'printing entries...')
+            # print([str(entry) for entry in data['entries']])
             process_info = None
             for entry in data['entries']:
                 if entry:
@@ -82,20 +88,27 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     break
 
             if process_info is None:
+                print('ytdl.YTDLSource.create_source', 'no truthy entry, throwing error')
                 raise YTDLError(
                     'Couldn\'t find anything that matches `{}`'.format(search))
 
+        # print('ytdl.YTDLSource.create_source', 'process_info', process_info)
         webpage_url = process_info['webpage_url']
         partial = functools.partial(
-            cls.ytdl.extract_info, webpage_url, download=False)
+            ytdl.extract_info, webpage_url, download=False)
         processed_info = await loop.run_in_executor(None, partial)
+        # print('ytdl.YTDLSource.create_source', 'processed_info', processed_info)
 
         if processed_info is None:
             raise YTDLError('Couldn\'t fetch `{}`'.format(webpage_url))
 
         if 'entries' not in processed_info:
+            # print('ytdl.YTDLSource.create_source', 'no entries in processed_info')
             info = processed_info
         else:
+            # print('ytdl.YTDLSource.create_source', 'entries in processed_info')
+            # print('ytdl.YTDLSource.create_source', 'printing entries...')
+            # print([str(entry) for entry in processed_info['entries']])
             info = None
             while info is None:
                 try:
@@ -104,28 +117,33 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     raise YTDLError(
                         'Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
 
-        return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
+        # print('ytdl.YTDLSource.create_source', 'info', info)
+        return cls(ctx, discord.FFmpegPCMAudio(info['url'], **FFMPEG_OPTIONS), data=info)
 
     @classmethod
     async def search_source(cls, bot: commands.Bot, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
+        # print('ytdl.YTDLSource.search_source', search)
         channel = ctx.channel
         loop = loop or asyncio.get_event_loop()
 
         cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
 
+        # print('ytdl.YTDLSource.search_source', 'extracting info')
         partial = functools.partial(
-            cls.ytdl.extract_info, cls.search_query, download=False, process=False)
+            ytdl.extract_info, cls.search_query, download=False, process=False)
         info = await loop.run_in_executor(None, partial)
 
         cls.search = {}
         cls.search["title"] = f'Search results for:\n**{search}**'
         cls.search["type"] = 'rich'
         cls.search["color"] = 7506394
-        cls.search["author"] = {'name': f'{ctx.author.name}',
-                                'url': f'{ctx.author.avatar_url}', 'icon_url': f'{ctx.author.avatar_url}'}
+        # cls.search["author"] = {'name': f'{ctx.author.name}',
+        #                         'url': f'{ctx.author.avatar_url}', 'icon_url': f'{ctx.author.avatar_url}'}
 
         lst = []
 
+        
+        # print('ytdl.YTDLSource.search_source', 'iterating over info[\'entries\']')
         for e in info['entries']:
             # lst.append(f'`{info["entries"].index(e) + 1}.` {e.get("title")} **[{YTDLSource.parse_duration(int(e.get("duration")))}]**\n')
             VId = e.get('id')
@@ -133,15 +151,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
             lst.append(
                 f'`{info["entries"].index(e) + 1}.` [{e.get("title")}]({VUrl})\n')
 
+        # print('ytdl.YTDLSource.search_source', 'finished iteration')
         lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
         cls.search["description"] = "\n".join(lst)
 
+        # print('ytdl.YTDLSource.search_source', 'creating embed')
         em = discord.Embed.from_dict(cls.search)
         await ctx.send(embed=em, delete_after=45.0)
 
         def check(msg):
             return msg.content.isdigit() == True and msg.channel == channel or msg.content == 'cancel' or msg.content == 'Cancel'
 
+        # print('ytdl.YTDLSource.search_source', 'waiting for response')
         try:
             m = await bot.wait_for('message', check=check, timeout=45.0)
 
@@ -158,10 +179,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
                             VId = value[sel - 1]['id']
                             VUrl = 'https://www.youtube.com/watch?v=%s' % (VId)
                             partial = functools.partial(
-                                cls.ytdl.extract_info, VUrl, download=False)
+                                ytdl.extract_info, VUrl, download=False)
                             data = await loop.run_in_executor(None, partial)
                     rtrn = cls(ctx, discord.FFmpegPCMAudio(
-                        data['url'], **cls.FFMPEG_OPTIONS), data=data)
+                        data['url'], **FFMPEG_OPTIONS), data=data)
                 else:
                     rtrn = 'sel_invalid'
             elif m.content == 'cancel':
