@@ -240,7 +240,6 @@ class VoiceState:
 
         if self.is_playing:
             self.voice.stop()
-        self.next.set()
 
     async def stop(self):
         self.songs.clear()
