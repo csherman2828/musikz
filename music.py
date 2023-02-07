@@ -39,7 +39,8 @@ class MusicCog(commands.Cog):
         ctx.voice_state = self.get_voice_state(ctx)
 
     async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        await ctx.send('An error occurred: {}'.format(str(error)))
+        print('An error occurred: {}'.format(str(error)))
+        await ctx.send('Sorry, I can\'t do that... I ran into an error.')
 
     @commands.Cog.listener()
     async def on_message(self, message):
