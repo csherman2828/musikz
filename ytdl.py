@@ -126,18 +126,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
         channel = ctx.channel
         loop = loop or asyncio.get_event_loop()
 
-        cls.search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
+        search_query = '%s%s:%s' % ('ytsearch', 10, ''.join(search))
 
         # print('ytdl.YTDLSource.search_source', 'extracting info')
         partial = functools.partial(
-            ytdl.extract_info, cls.search_query, download=False, process=False)
+            ytdl.extract_info, search_query, download=False, process=False)
         info = await loop.run_in_executor(None, partial)
 
-        cls.search = {}
-        cls.search["title"] = f'Search results for:\n**{search}**'
-        cls.search["type"] = 'rich'
-        cls.search["color"] = 7506394
-        # cls.search["author"] = {'name': f'{ctx.author.name}',
+        search = {}
+        search["title"] = f'Search results for:\n**{search}**'
+        search["type"] = 'rich'
+        search["color"] = 7506394
+        # search["author"] = {'name': f'{ctx.author.name}',
         #                         'url': f'{ctx.author.avatar_url}', 'icon_url': f'{ctx.author.avatar_url}'}
 
         lst = []
@@ -153,10 +153,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         # print('ytdl.YTDLSource.search_source', 'finished iteration')
         lst.append('\n**Type a number to make a choice, Type `cancel` to exit**')
-        cls.search["description"] = "\n".join(lst)
+        search["description"] = "\n".join(lst)
 
         # print('ytdl.YTDLSource.search_source', 'creating embed')
-        em = discord.Embed.from_dict(cls.search)
+        em = discord.Embed.from_dict(search)
         await ctx.send(embed=em, delete_after=45.0)
 
         def check(msg):
